@@ -116,6 +116,25 @@ public class BootcampHandlerImpl {
                                     .build()));
                 });
     }
+    
+    public Mono<ServerResponse> deleteBootcamp(ServerRequest request) {
+        String messageId = getMessageId(request);
+        String bootcampId = request.pathVariable("id");
+        
+        return bootcampServicePort.deleteBootcamp(bootcampId)
+                .then(ServerResponse.noContent().build())
+                .onErrorResume(ex -> {
+                    log.error("[{}] Error deleting bootcamp: {}", messageId, ex.getMessage(), ex);
+                    return buildErrorResponse(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            messageId,
+                            TechnicalMessage.INTERNAL_ERROR,
+                            List.of(ErrorDTO.builder()
+                                    .code("500")
+                                    .message("Error deleting bootcamp: " + ex.getMessage())
+                                    .build()));
+                });
+    }
 
     private Mono<ServerResponse> buildErrorResponse(HttpStatus httpStatus, String identifier, TechnicalMessage error,
                                                     List<ErrorDTO> errors) {

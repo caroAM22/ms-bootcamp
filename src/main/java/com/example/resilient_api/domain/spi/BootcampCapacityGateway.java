@@ -7,4 +7,5 @@ import java.util.List;
 public interface BootcampCapacityGateway {
     Mono<Void> assignCapacitiesToBootcamp(String bootcampId, List<String> capacityIds);
     Mono<List<BootcampWithCapacities.CapacityWithTechs>> getBootcampCapacities(String bootcampId);
+    Mono<Void> deleteBootcampCapacities(String bootcampId);
 }
