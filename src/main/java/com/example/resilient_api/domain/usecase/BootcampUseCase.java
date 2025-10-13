@@ -2,11 +2,15 @@ package com.example.resilient_api.domain.usecase;
 
 import com.example.resilient_api.domain.api.BootcampServicePort;
 import com.example.resilient_api.domain.model.Bootcamp;
+import com.example.resilient_api.domain.model.BootcampWithCapacities;
+import com.example.resilient_api.domain.model.Page;
+import com.example.resilient_api.domain.model.PageRequest;
 import com.example.resilient_api.domain.spi.CapacityValidatorGateway;
 import com.example.resilient_api.domain.spi.BootcampPersistencePort;
 import com.example.resilient_api.domain.spi.BootcampCapacityGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.util.UUID;
 
@@ -36,6 +40,40 @@ public class BootcampUseCase implements BootcampServicePort{
                             savedBootcamp.getId(), 
                             savedBootcamp.getCapacitiesIds()
                     ).thenReturn(savedBootcamp);
+                });
+    }
+    
+    public Mono<Page<BootcampWithCapacities>> listBootcamps(PageRequest pageRequest) {
+        return bootcampPersistencePort.findAll(pageRequest)
+                .flatMap(bootcampPage -> {
+                    return Flux.fromIterable(bootcampPage.getContent())
+                            .flatMap(this::enrichBootcampWithCapacities)
+                            .collectList()
+                            .map(enrichedBootcamps -> {
+                                Page<BootcampWithCapacities> result = new Page<>();
+                                result.setContent(enrichedBootcamps);
+                                result.setPage(bootcampPage.getPage());
+                                result.setSize(bootcampPage.getSize());
+                                result.setTotalElements(bootcampPage.getTotalElements());
+                                result.setTotalPages(bootcampPage.getTotalPages());
+                                result.setFirst(bootcampPage.isFirst());
+                                result.setLast(bootcampPage.isLast());
+                                return result;
+                            });
+                });
+    }
+    
+    private Mono<BootcampWithCapacities> enrichBootcampWithCapacities(Bootcamp bootcamp) {
+        return bootcampCapacityGateway.getBootcampCapacities(bootcamp.getId())
+                .map(capacities -> {
+                    BootcampWithCapacities enriched = new BootcampWithCapacities();
+                    enriched.setId(bootcamp.getId());
+                    enriched.setName(bootcamp.getName());
+                    enriched.setDescription(bootcamp.getDescription());
+                    enriched.setLaunchDate(bootcamp.getLaunchDate());
+                    enriched.setDuration(bootcamp.getDuration());
+                    enriched.setCapacities(capacities);
+                    return enriched;
                 });
     }
 }
