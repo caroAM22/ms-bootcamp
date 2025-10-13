@@ -1,11 +1,12 @@
 package com.example.resilient_api.infrastructure.entrypoints.handler;
 
-import com.example.resilient_api.domain.api.UserServicePort;
+import com.example.resilient_api.domain.api.BootcampServicePort;
 import com.example.resilient_api.domain.enums.TechnicalMessage;
 import com.example.resilient_api.domain.exceptions.BusinessException;
 import com.example.resilient_api.domain.exceptions.TechnicalException;
-import com.example.resilient_api.infrastructure.entrypoints.dto.UserDTO;
-import com.example.resilient_api.infrastructure.entrypoints.mapper.UserMapper;
+import com.example.resilient_api.domain.model.Bootcamp;
+import com.example.resilient_api.infrastructure.entrypoints.dto.BootcampDTO;
+import com.example.resilient_api.infrastructure.entrypoints.mapper.BootcampMapper;
 import com.example.resilient_api.infrastructure.entrypoints.util.APIResponse;
 import com.example.resilient_api.infrastructure.entrypoints.util.ErrorDTO;
 import lombok.RequiredArgsConstructor;
@@ -15,37 +16,39 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
-import reactor.util.context.Context;
 
 import java.time.Instant;
 import java.util.List;
 
-import static com.example.resilient_api.infrastructure.entrypoints.util.Constants.X_MESSAGE_ID;
-import static com.example.resilient_api.infrastructure.entrypoints.util.Constants.USER_ERROR;
-
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class UserHandlerImpl {
+public class BootcampHandlerImpl {
 
-    private final UserServicePort userServicePort;
-    private final UserMapper userMapper;
+    private final BootcampServicePort bootcampServicePort;
+    private final BootcampMapper bootcampMapper;
 
-    public Mono<ServerResponse> createUser(ServerRequest request) {
+    public Mono<ServerResponse> createBootcamp(ServerRequest request) {
         String messageId = getMessageId(request);
-        return request.bodyToMono(UserDTO.class)
-                .flatMap(user -> userServicePort.registerUser(userMapper.userDTOToUser(user), messageId)
-                        .doOnSuccess(savedUser -> log.info("User created successfully with messageId: {}", messageId))
-                )
-                .flatMap(savedUser -> ServerResponse
+        return request.bodyToMono(BootcampDTO.class)
+                .doOnNext(dto -> {
+                    log.info("[{}] Received BootcampDTO: name={}, description={}, launchDate={}, duration={}, capacitiesIds={}", 
+                            messageId, dto.getName(), dto.getDescription(), dto.getLaunchDate(), dto.getDuration(), dto.getCapacitiesIds());
+                    log.info("[{}] CapacitiesIds size: {}", messageId, dto.getCapacitiesIds() != null ? dto.getCapacitiesIds().size() : "null");
+                })
+                .flatMap((BootcampDTO bootcampDTO) -> {
+                    Bootcamp bootcamp = bootcampMapper.bootcampDTOTobBootcamp(bootcampDTO);
+                    log.info("[{}] Mapped Bootcamp: name={}, capacitiesIds={}", messageId, bootcamp.getName(), bootcamp.getCapacitiesIds());
+                    return bootcampServicePort.registerBootcamp(bootcamp)
+                            .doOnSuccess(savedBootcamp -> log.info("[{}] Bootcamp created successfully", messageId));
+                })
+                .flatMap(savedBootcamp -> ServerResponse
                         .status(HttpStatus.CREATED)
-                        .bodyValue(TechnicalMessage.USER_CREATED.getMessage()))
-                .contextWrite(Context.of(X_MESSAGE_ID, messageId))
-                .doOnError(ex -> log.error(USER_ERROR, ex))
+                        .bodyValue("Bootcamp created successfully"))
                 .onErrorResume(BusinessException.class, ex -> buildErrorResponse(
                         HttpStatus.BAD_REQUEST,
                         messageId,
-                        TechnicalMessage.INVALID_PARAMETERS,
+                        ex.getTechnicalMessage(),
                         List.of(ErrorDTO.builder()
                                 .code(ex.getTechnicalMessage().getCode())
                                 .message(ex.getTechnicalMessage().getMessage())
@@ -54,21 +57,21 @@ public class UserHandlerImpl {
                 .onErrorResume(TechnicalException.class, ex -> buildErrorResponse(
                         HttpStatus.INTERNAL_SERVER_ERROR,
                         messageId,
-                        TechnicalMessage.INTERNAL_ERROR,
+                        ex.getTechnicalMessage(),
                         List.of(ErrorDTO.builder()
                                 .code(ex.getTechnicalMessage().getCode())
                                 .message(ex.getTechnicalMessage().getMessage())
                                 .param(ex.getTechnicalMessage().getParam())
                                 .build())))
                 .onErrorResume(ex -> {
-                    log.error("Unexpected error occurred for messageId: {}", messageId, ex);
+                    log.error("[{}] Unexpected error: {}", messageId, ex.getMessage(), ex);
                     return buildErrorResponse(
                             HttpStatus.INTERNAL_SERVER_ERROR,
                             messageId,
                             TechnicalMessage.INTERNAL_ERROR,
                             List.of(ErrorDTO.builder()
-                                    .code(TechnicalMessage.INTERNAL_ERROR.getCode())
-                                    .message(TechnicalMessage.INTERNAL_ERROR.getMessage())
+                                    .code("500")
+                                    .message("Internal server error: " + ex.getMessage())
                                     .build()));
                 });
     }
@@ -90,6 +93,6 @@ public class UserHandlerImpl {
     }
 
     private String getMessageId(ServerRequest serverRequest) {
-        return serverRequest.headers().firstHeader(X_MESSAGE_ID);
+        return serverRequest.headers().firstHeader("X-Message-ID");
     }
 }
