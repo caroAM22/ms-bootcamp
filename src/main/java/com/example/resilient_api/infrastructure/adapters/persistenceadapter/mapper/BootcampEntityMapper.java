@@ -18,7 +18,7 @@ public class BootcampEntityMapper {
         bootcamp.setId(entity.getId());
         bootcamp.setName(entity.getName());
         bootcamp.setDescription(entity.getDescription());
-        bootcamp.setLaunchDate(entity.getLaunchDate() != null ? java.time.LocalDate.parse(entity.getLaunchDate()) : null);
+        bootcamp.setLaunchDate(entity.getLaunchDate());
         bootcamp.setDuration(entity.getDuration());
         bootcamp.setCapacitiesIds(capacitiesIds);
         return bootcamp;
@@ -31,9 +31,8 @@ public class BootcampEntityMapper {
         entity.setId(bootcamp.getId());
         entity.setName(bootcamp.getName());
         entity.setDescription(bootcamp.getDescription());
-        entity.setLaunchDate(bootcamp.getLaunchDate() != null ? bootcamp.getLaunchDate().toString() : null);
+        entity.setLaunchDate(bootcamp.getLaunchDate());
         entity.setDuration(bootcamp.getDuration());
-        // capacitiesIds no se mapean porque se guardan en otro microservicio
         return entity;
     }
 }

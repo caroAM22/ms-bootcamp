@@ -1,5 +1,6 @@
 package com.example.resilient_api.infrastructure.adapters.bootcampcapacityadapter;
 
+import com.example.resilient_api.domain.model.BootcampWithCapacities;
 import com.example.resilient_api.domain.spi.BootcampCapacityGateway;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -21,6 +22,16 @@ public class BootcampCapacityClient implements BootcampCapacityGateway {
                 .then();
     }
     
+    @Override
+    public Mono<List<BootcampWithCapacities.CapacityWithTechs>> getBootcampCapacities(String bootcampId) {
+        return webClient.get()
+                .uri("/bootcamp-capacity/{bootcampId}", bootcampId)
+                .retrieve()
+                .bodyToMono(BootcampCapacityResponse.class)
+                .map(response -> response.data)
+                .onErrorReturn(List.of());
+    }
+    
     private Mono<Void> assignCapacityToBootcamp(String bootcampId, String capacityId) {
         return webClient.post()
                 .uri("/bootcamp-capacity")
@@ -31,4 +42,6 @@ public class BootcampCapacityClient implements BootcampCapacityGateway {
     }
     
     private record BootcampCapacityRequest(String bootcampId, String capacityId) {}
+    
+    private record BootcampCapacityResponse(String message, List<BootcampWithCapacities.CapacityWithTechs> data) {}
 }

@@ -1,6 +1,8 @@
 package com.example.resilient_api.infrastructure.adapters.persistenceadapter;
 
 import com.example.resilient_api.domain.model.Bootcamp;
+import com.example.resilient_api.domain.model.Page;
+import com.example.resilient_api.domain.model.PageRequest;
 import com.example.resilient_api.domain.spi.BootcampPersistencePort;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.entity.BootcampEntity;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.mapper.BootcampEntityMapper;
@@ -31,5 +33,38 @@ public class BootcampPersistenceAdapter implements BootcampPersistencePort {
                     return savedBootcamp;
                 });
     }
+    
+    @Override
+    public Mono<Page<Bootcamp>> findAll(PageRequest pageRequest) {
+        int offset = pageRequest.getPage() * pageRequest.getSize();
+        return bootcampRepository.count()
+                .flatMap(totalElements -> {
+                    return bootcampRepository.findAllWithPagination(pageRequest.getSize(), offset)
+                            .map(entity -> bootcampEntityMapper.toModel(entity))
+                            .collectList()
+                            .map(bootcamps -> {
+                                // Sort in memory based on pageRequest
+                                bootcamps.sort((b1, b2) -> {
+                                    int comparison = 0;
+                                    if ("name".equals(pageRequest.getSortBy())) {
+                                        comparison = b1.getName().compareTo(b2.getName());
+                                    }
+                                    return pageRequest.getDirection() == PageRequest.SortDirection.DESC ? -comparison : comparison;
+                                });
+                                
+                                Page<Bootcamp> page = new Page<>();
+                                page.setContent(bootcamps);
+                                page.setPage(pageRequest.getPage());
+                                page.setSize(pageRequest.getSize());
+                                page.setTotalElements(totalElements);
+                                page.setTotalPages((int) Math.ceil((double) totalElements / pageRequest.getSize()));
+                                page.setFirst(pageRequest.getPage() == 0);
+                                page.setLast(pageRequest.getPage() >= page.getTotalPages() - 1);
+                                return page;
+                            });
+                });
+    }
+    
+
 
 }
