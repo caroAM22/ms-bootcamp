@@ -1,6 +1,6 @@
 package com.example.resilient_api.infrastructure.entrypoints;
 
-import com.example.resilient_api.infrastructure.entrypoints.handler.UserHandlerImpl;
+import com.example.resilient_api.infrastructure.entrypoints.handler.BootcampHandlerImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -12,7 +12,7 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 @Configuration
 public class RouterRest {
     @Bean
-    public RouterFunction<ServerResponse> routerFunction(UserHandlerImpl userHandler) {
-        return route(POST("/user"), userHandler::createUser);
+    public RouterFunction<ServerResponse> routerFunction(BootcampHandlerImpl bootcampHandler) {
+        return route(POST("/bootcamp"), bootcampHandler::createBootcamp);
     }
 }
