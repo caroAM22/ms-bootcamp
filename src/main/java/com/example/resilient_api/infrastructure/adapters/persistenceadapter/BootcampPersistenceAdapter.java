@@ -65,6 +65,8 @@ public class BootcampPersistenceAdapter implements BootcampPersistencePort {
                 });
     }
     
-
-
+    @Override
+    public Mono<Void> deleteById(String id) {
+        return bootcampRepository.deleteById(id);
+    }
 }

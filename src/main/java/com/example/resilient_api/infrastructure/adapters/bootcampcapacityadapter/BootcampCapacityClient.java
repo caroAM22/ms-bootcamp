@@ -32,6 +32,14 @@ public class BootcampCapacityClient implements BootcampCapacityGateway {
                 .onErrorReturn(List.of());
     }
     
+    @Override
+    public Mono<Void> deleteBootcampCapacities(String bootcampId) {
+        return webClient.delete()
+                .uri("/bootcamp-capacity/{bootcampId}", bootcampId)
+                .retrieve()
+                .bodyToMono(Void.class);
+    }
+    
     private Mono<Void> assignCapacityToBootcamp(String bootcampId, String capacityId) {
         return webClient.post()
                 .uri("/bootcamp-capacity")

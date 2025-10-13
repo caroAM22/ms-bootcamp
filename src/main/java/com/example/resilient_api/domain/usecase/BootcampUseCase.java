@@ -63,6 +63,11 @@ public class BootcampUseCase implements BootcampServicePort{
                 });
     }
     
+    public Mono<Void> deleteBootcamp(String bootcampId) {
+        return bootcampCapacityGateway.deleteBootcampCapacities(bootcampId)
+                .then(bootcampPersistencePort.deleteById(bootcampId));
+    }
+    
     private Mono<BootcampWithCapacities> enrichBootcampWithCapacities(Bootcamp bootcamp) {
         return bootcampCapacityGateway.getBootcampCapacities(bootcamp.getId())
                 .map(capacities -> {

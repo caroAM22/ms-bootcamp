@@ -8,4 +8,5 @@ import reactor.core.publisher.Mono;
 public interface BootcampPersistencePort {
     Mono<Bootcamp> save(Bootcamp user);
     Mono<Page<Bootcamp>> findAll(PageRequest pageRequest);
+    Mono<Void> deleteById(String id);
 }
