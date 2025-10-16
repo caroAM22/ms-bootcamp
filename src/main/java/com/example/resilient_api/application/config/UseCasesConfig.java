@@ -1,8 +1,6 @@
 package com.example.resilient_api.application.config;
 
-import com.example.resilient_api.domain.spi.BootcampPersistencePort;
-import com.example.resilient_api.domain.spi.CapacityValidatorGateway;
-import com.example.resilient_api.domain.spi.BootcampCapacityGateway;
+import com.example.resilient_api.domain.spi.*;
 import com.example.resilient_api.domain.usecase.BootcampUseCase;
 import com.example.resilient_api.domain.api.BootcampServicePort;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.BootcampPersistenceAdapter;
@@ -24,7 +22,7 @@ public class UseCasesConfig {
         }
 
         @Bean
-        public BootcampServicePort bootcampServicePort(CapacityValidatorGateway capacityValidatorGateway, BootcampPersistencePort bootcampPersistencePort, BootcampCapacityGateway bootcampCapacityGateway){
-                return new BootcampUseCase(capacityValidatorGateway, bootcampPersistencePort, bootcampCapacityGateway);
+        public BootcampServicePort bootcampServicePort(CapacityValidatorGateway capacityValidatorGateway, BootcampPersistencePort bootcampPersistencePort, BootcampCapacityGateway bootcampCapacityGateway, SagaOrchestrator sagaOrchestrator, CapacitySagaGateway capacitySagaGateway){
+                return new BootcampUseCase(capacityValidatorGateway, bootcampPersistencePort, bootcampCapacityGateway, sagaOrchestrator, capacitySagaGateway);
         }
 }

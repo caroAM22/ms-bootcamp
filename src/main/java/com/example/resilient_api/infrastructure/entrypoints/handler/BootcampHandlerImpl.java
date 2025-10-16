@@ -121,10 +121,13 @@ public class BootcampHandlerImpl {
         String messageId = getMessageId(request);
         String bootcampId = request.pathVariable("id");
         
+        log.info("[{}] Starting bootcamp deletion for ID: {}", messageId, bootcampId);
+        
         return bootcampServicePort.deleteBootcamp(bootcampId)
+                .doOnSuccess(v -> log.info("[{}] Bootcamp deletion completed successfully for ID: {}", messageId, bootcampId))
                 .then(ServerResponse.noContent().build())
                 .onErrorResume(ex -> {
-                    log.error("[{}] Error deleting bootcamp: {}", messageId, ex.getMessage(), ex);
+                    log.error("[{}] Error deleting bootcamp {}: {}", messageId, bootcampId, ex.getMessage(), ex);
                     return buildErrorResponse(
                             HttpStatus.INTERNAL_SERVER_ERROR,
                             messageId,

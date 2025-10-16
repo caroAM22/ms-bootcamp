@@ -15,8 +15,8 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 public class RouterRest {
     @Bean
     public RouterFunction<ServerResponse> routerFunction(BootcampHandlerImpl bootcampHandler) {
-        return route(POST("/bootcamp"), bootcampHandler::createBootcamp)
-                .andRoute(GET("/bootcamp"), bootcampHandler::listBootcamps)
-                .andRoute(DELETE("/bootcamp/{id}"), bootcampHandler::deleteBootcamp);
+        return route(POST("/bootcamps"), bootcampHandler::createBootcamp)
+                .andRoute(GET("/bootcamps"), bootcampHandler::listBootcamps)
+                .andRoute(DELETE("/bootcamps/{id}"), bootcampHandler::deleteBootcamp);
     }
 }
