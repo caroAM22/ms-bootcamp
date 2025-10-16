@@ -2,6 +2,7 @@ package com.example.resilient_api.infrastructure.adapters.bootcampcapacityadapte
 
 import com.example.resilient_api.domain.model.BootcampWithCapacities;
 import com.example.resilient_api.domain.spi.BootcampCapacityGateway;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -9,11 +10,10 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class BootcampCapacityClient implements BootcampCapacityGateway {
     
-    private final WebClient webClient = WebClient.builder()
-            .baseUrl("http://localhost:8081")
-            .build();
+    private final WebClient webClient;
     
     @Override
     public Mono<Void> assignCapacitiesToBootcamp(String bootcampId, List<String> capacityIds) {

@@ -4,6 +4,8 @@ import com.example.resilient_api.domain.model.Bootcamp;
 import com.example.resilient_api.domain.spi.CapacityValidatorGateway;
 import com.example.resilient_api.domain.spi.BootcampPersistencePort;
 import com.example.resilient_api.domain.spi.BootcampCapacityGateway;
+import com.example.resilient_api.domain.spi.SagaOrchestrator;
+import com.example.resilient_api.domain.spi.CapacitySagaGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,12 +33,18 @@ class BootcampUseCaseTest {
     
     @Mock
     private BootcampCapacityGateway bootcampCapacityGateway;
+    
+    @Mock
+    private SagaOrchestrator sagaOrchestrator;
+    
+    @Mock
+    private CapacitySagaGateway capacitySagaGateway;
 
     private BootcampUseCase bootcampUseCase;
 
     @BeforeEach
     void setUp() {
-        bootcampUseCase = new BootcampUseCase(capacityValidatorGateway, bootcampPersistencePort, bootcampCapacityGateway);
+        bootcampUseCase = new BootcampUseCase(capacityValidatorGateway, bootcampPersistencePort, bootcampCapacityGateway, sagaOrchestrator, capacitySagaGateway);
     }
 
     @Test
