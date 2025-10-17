@@ -17,6 +17,7 @@ public class RouterRest {
     public RouterFunction<ServerResponse> routerFunction(BootcampHandlerImpl bootcampHandler) {
         return route(POST("/bootcamps"), bootcampHandler::createBootcamp)
                 .andRoute(GET("/bootcamps"), bootcampHandler::listBootcamps)
-                .andRoute(DELETE("/bootcamps/{id}"), bootcampHandler::deleteBootcamp);
+                .andRoute(DELETE("/bootcamps/{id}"), bootcampHandler::deleteBootcamp)
+                .andRoute(POST("/register"), bootcampHandler::validateRegistration);
     }
 }

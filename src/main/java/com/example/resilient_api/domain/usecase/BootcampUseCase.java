@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import java.time.LocalDate;
 import java.util.*;
 
 @RequiredArgsConstructor
@@ -112,6 +113,47 @@ public class BootcampUseCase implements BootcampServicePort{
     private Mono<Void> restoreBootcamp(String bootcampId) {
         log.warn("Bootcamp restoration not implemented for id: {}", bootcampId);
         return Mono.empty();
+    }
+    
+    public Mono<RegistrationValidationResult> validateRegistration(List<String> bootcampIds) {
+        return bootcampPersistencePort.findByIds(bootcampIds)
+                .collectList()
+                .map(bootcamps -> {
+                    RegistrationValidationResult result = new RegistrationValidationResult();
+                    
+                    // Check if all bootcamps exist
+                    if (bootcamps.size() != bootcampIds.size()) {
+                        result.setCanRegister(false);
+                        result.setMessage("Some bootcamps do not exist");
+                        result.setConflicts(List.of("Invalid bootcamp IDs provided"));
+                        return result;
+                    }
+                    
+                    List<String> conflicts = new ArrayList<>();
+                    
+                    for (int i = 0; i < bootcamps.size(); i++) {
+                        for (int j = i + 1; j < bootcamps.size(); j++) {
+                            Bootcamp b1 = bootcamps.get(i);
+                            Bootcamp b2 = bootcamps.get(j);
+                            
+                            if (hasDateConflict(b1, b2)) {
+                                conflicts.add(b1.getName() + " conflicts with " + b2.getName());
+                            }
+                        }
+                    }
+                    
+                    result.setCanRegister(conflicts.isEmpty());
+                    result.setConflicts(conflicts);
+                    result.setMessage(conflicts.isEmpty() ? "Registration allowed" : "Date conflicts found");
+                    return result;
+                });
+    }
+    
+    private boolean hasDateConflict(Bootcamp b1, Bootcamp b2) {
+        LocalDate end1 = b1.getLaunchDate().plusDays(b1.getDuration());
+        LocalDate end2 = b2.getLaunchDate().plusDays(b2.getDuration());
+        
+        return !(b1.getLaunchDate().isAfter(end2) || b2.getLaunchDate().isAfter(end1));
     }
     
     private Mono<BootcampWithCapacities> enrichBootcampWithCapacities(Bootcamp bootcamp) {

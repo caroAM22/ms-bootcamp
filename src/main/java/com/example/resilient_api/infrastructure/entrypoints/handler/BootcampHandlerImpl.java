@@ -7,6 +7,8 @@ import com.example.resilient_api.domain.exceptions.TechnicalException;
 import com.example.resilient_api.domain.model.Bootcamp;
 import com.example.resilient_api.domain.model.PageRequest;
 import com.example.resilient_api.infrastructure.entrypoints.dto.BootcampDTO;
+import com.example.resilient_api.infrastructure.entrypoints.dto.RegistrationRequestDTO;
+import com.example.resilient_api.infrastructure.entrypoints.dto.RegistrationResponseDTO;
 import com.example.resilient_api.infrastructure.entrypoints.mapper.BootcampMapper;
 import com.example.resilient_api.infrastructure.entrypoints.util.APIResponse;
 import com.example.resilient_api.infrastructure.entrypoints.util.ErrorDTO;
@@ -135,6 +137,35 @@ public class BootcampHandlerImpl {
                             List.of(ErrorDTO.builder()
                                     .code("500")
                                     .message("Error deleting bootcamp: " + ex.getMessage())
+                                    .build()));
+                });
+    }
+    
+    public Mono<ServerResponse> validateRegistration(ServerRequest request) {
+        String messageId = getMessageId(request);
+        
+        return request.bodyToMono(RegistrationRequestDTO.class)
+                .flatMap(dto -> bootcampServicePort.validateRegistration(dto.getBootcampIds()))
+                .map(result -> {
+                    RegistrationResponseDTO response = new RegistrationResponseDTO();
+                    response.setCanRegister(result.isCanRegister());
+                    response.setMessage(result.getMessage());
+                    response.setConflicts(result.getConflicts());
+                    return response;
+                })
+                .flatMap(response -> {
+                    HttpStatus status = response.isCanRegister() ? HttpStatus.OK : HttpStatus.BAD_REQUEST;
+                    return ServerResponse.status(status).bodyValue(response);
+                })
+                .onErrorResume(ex -> {
+                    log.error("[{}] Error validating registration: {}", messageId, ex.getMessage(), ex);
+                    return buildErrorResponse(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            messageId,
+                            TechnicalMessage.INTERNAL_ERROR,
+                            List.of(ErrorDTO.builder()
+                                    .code("500")
+                                    .message("Error validating registration: " + ex.getMessage())
                                     .build()));
                 });
     }

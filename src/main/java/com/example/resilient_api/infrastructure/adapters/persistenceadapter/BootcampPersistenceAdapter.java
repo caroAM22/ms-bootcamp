@@ -9,7 +9,9 @@ import com.example.resilient_api.infrastructure.adapters.persistenceadapter.mapp
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.repository.BootcampRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import java.util.List;
 
 @AllArgsConstructor
 @Slf4j
@@ -68,5 +70,17 @@ public class BootcampPersistenceAdapter implements BootcampPersistencePort {
     @Override
     public Mono<Void> deleteById(String id) {
         return bootcampRepository.deleteById(id);
+    }
+    
+    @Override
+    public Mono<Bootcamp> findById(String id) {
+        return bootcampRepository.findById(id)
+                .map(bootcampEntityMapper::toModel);
+    }
+    
+    @Override
+    public Flux<Bootcamp> findByIds(List<String> ids) {
+        return bootcampRepository.findAllById(ids)
+                .map(bootcampEntityMapper::toModel);
     }
 }
